@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width">
+<title>frontend</title>
+<link rel="stylesheet" href="dist/leaflet.css">
+
+<style>
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  align-content: stretch;
+}
+
+#mapContainer {
+  flex: 1;
+}
+
+#toolbar {
+  position: absolute;
+}
+
+</style>
+
+<script src="dist/main.js"></script>
+
+<body>
+  <div id="container">
+    <div id="mapContainer"></div>
+    <div id="toolbar">t o o l b a r</div>
+  </div>
+</body>
+

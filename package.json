@@ -1,0 +1,19 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@deck.gl/core": "^8.6.4",
+    "@deck.gl/layers": "^8.6.4",
+    "deck.gl": "^8.6.4",
+    "deck.gl-leaflet": "^1.2.0",
+    "leaflet": "^1.7.1",
+    "osmtogeojson": "^3.0.0-beta.4",
+    "prettier": "^2.5.1"
+  },
+  "scripts": {
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.14.2"
+  }
+}
