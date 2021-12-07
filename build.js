@@ -11,7 +11,7 @@ const buildJs = esbuild.build({
 });
 
 const buildCss = esbuild.build({
-  entryPoints: ['node_modules/leaflet/dist/leaflet.css'],
+  entryPoints: ['node_modules/maplibre-gl/dist/maplibre-gl.css'],
   outdir: 'dist/',
 });
 

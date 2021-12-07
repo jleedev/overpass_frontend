@@ -2,7 +2,7 @@
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width">
 <title>frontend</title>
-<link rel="stylesheet" href="dist/leaflet.css">
+<link rel="stylesheet" href="dist/maplibre-gl.css">
 
 <style>
 
@@ -19,8 +19,15 @@ html, body {
   align-content: stretch;
 }
 
-#mapContainer {
+#mapLayers {
   flex: 1;
+  position: relative;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  position: absolute;
 }
 
 #toolbar {
@@ -33,7 +40,10 @@ html, body {
 
 <body>
   <div id="container">
-    <div id="mapContainer"></div>
+    <div id="mapLayers">
+      <div id="map"></div>
+      <canvas id="deck-canvas"></canvas>
+    </div>
     <div id="toolbar">t o o l b a r</div>
   </div>
 </body>

@@ -1,43 +1,51 @@
-import * as L from 'leaflet';
-import { LeafletLayer } from 'deck.gl-leaflet';
-import { MapView } from '@deck.gl/core';
+import { Deck } from '@deck.gl/core';
 import { GeoJsonLayer, ScatterplotLayer } from '@deck.gl/layers';
 import osmtogeojson from 'osmtogeojson';
+import maplibregl from 'maplibre-gl';
 
-async function load_basemap(el) {
-  // const r = await fetch('https://api.maptiler.com/maps/toner/tiles.json?key=j20l9qIApPvfmDy7ZuPM');
-  const r = await fetch('https://api.maptiler.com/maps/toner/256/tiles.json?key=j20l9qIApPvfmDy7ZuPM');
-  const tilejson = await r.json();
-  const [urlTemplate] = tilejson.tiles;
-  const {
-    minzoom: minZoom,
-    maxzoom: maxZoom,
-    attribution,
-    center: inCenter,
-  } = tilejson;
-  // const tileSize = 512;
-  const [lng, lat] = inCenter.slice(0, 2);
-  const center = { lat, lng };
-  const zoom = inCenter.slice(2);
-  const map = L.map(el, { center, zoom });
-  L.tileLayer(urlTemplate, { minZoom, maxZoom, attribution }).addTo(map);
+const MAP_STYLE = {"version":8,"sources":{"raster-tiles":{"type":"raster","url":"https://api.maptiler.com/maps/toner/tiles.json?key=j20l9qIApPvfmDy7ZuPM"}},"layers":[{"id":"simple-tiles","type":"raster","source":"raster-tiles"}]};
+
+const INITIAL_VIEW_STATE = {
+  latitude: 40.44,
+  longitude: -80,
+  zoom: 9,
+  bearing: 0,
+  pitch: 0
+};
+
+function load_basemap(el) {
+  const map = new maplibregl.Map({
+    container: el,
+    style: MAP_STYLE,
+    // Note: deck.gl will be in charge of interaction and event handling
+    interactive: false,
+    center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
+    zoom: INITIAL_VIEW_STATE.zoom,
+    bearing: INITIAL_VIEW_STATE.bearing,
+    pitch: INITIAL_VIEW_STATE.pitch
+  });
   return map;
 }
 
 async function build_deck(el) {
   const map = await load_basemap(el);
-  const deckLayer = new LeafletLayer({
-    views: [
-      new MapView({
-        repeat: true
-      })
-    ],
+  const deck = new Deck({
+    initialViewState: INITIAL_VIEW_STATE,
+    canvas: 'deck-canvas',
+    controller: true,
+    onViewStateChange: ({viewState}) => {
+      map.jumpTo({
+        center: [viewState.longitude, viewState.latitude],
+        zoom: viewState.zoom,
+        bearing: viewState.bearing,
+        pitch: viewState.pitch
+      });
+    },
     layers: [
-      scatter_layer
-    ]
+      scatter_layer,
+    ],
   });
-  map.addLayer(deckLayer);
-  return { map, deckLayer };
+  return { map, deck };
 }
 
 async function load_data() {
@@ -65,17 +73,18 @@ const scatter_layer = new ScatterplotLayer({
 
 async function init() {
   const data_layer = await get_data_layer();
-  const { map, deckLayer } = await build_deck(mapContainer);
-  deckLayer.setProps(
+  const el = document.querySelector('#map');
+  const { map, deck } = await build_deck(el);
+  deck.setProps(
     {
       layers: [
-        ...deckLayer.props.layers,
+        ...deck.props.layers,
         data_layer,
       ]
     }
   );
   window.map = map;
-  window.deckLayer = deckLayer;
+  window.deck = deck;
 }
 
 document.addEventListener('DOMContentLoaded', init);
