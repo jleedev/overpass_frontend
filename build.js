@@ -10,7 +10,7 @@ console.log(
         "node_modules/bootstrap/dist/js/bootstrap.bundle.js",
       ],
       outdir: "dist/",
-      //bundle: true,
+      bundle: true,
       minify: true,
       sourcemap: true,
     }),

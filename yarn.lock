@@ -33,6 +33,11 @@
     "@math.gl/polygon" "^3.5.4"
     earcut "^2.0.6"
 
+"@deck.gl/mapbox@^8.6.5":
+  version "8.6.5"
+  resolved "https://registry.yarnpkg.com/@deck.gl/mapbox/-/mapbox-8.6.5.tgz#b6e98a7a9dfaeb039d2259a986a88c3b20973e7d"
+  integrity sha512-NuUD0JzOpsCHZPrpNsT+eTEjQpZ/svoxmmvZkfP9aBQYcJ4Gy5EBmJzvCaf3gVZkPDQHKM2zPyqfri5j867jtg==
+
 "@loaders.gl/core@^3.0.8":
   version "3.0.13"
   resolved "https://registry.yarnpkg.com/@loaders.gl/core/-/core-3.0.13.tgz#95ae41beb9de17e029156345ef802bea56e9126a"
