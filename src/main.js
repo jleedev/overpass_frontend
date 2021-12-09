@@ -36,7 +36,7 @@ function load_basemap(el) {
 }
 
 async function load_data() {
-  const f = await fetch("osm_data2.json");
+  const f = await fetch("osm_data.json");
   const j = await f.json();
   const geojson = osmtogeojson(j);
   return geojson;
@@ -48,8 +48,10 @@ async function get_data_layer() {
     id: "deckgl-geojson",
     type: GeoJsonLayer,
     data,
+    pickable: true,
+    autoHighlight: true,
     getLineWidth: 1,
-    lineWidthMinPixels: 1,
+    lineWidthMinPixels: 5,
     getLineColor: [255, 0, 255],
   });
 }
