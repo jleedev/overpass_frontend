@@ -34,9 +34,17 @@ html, body {
   position: absolute;
 }
 
+#tooltip {
+  position: absolute;
+  pointer-events: none;
+  white-space: pre-wrap;
+  background: white;
+  font: 0.8em monospace;
+}
+
 </style>
 
-<script src="dist/src/main.js"></script>
+<script type="module" src="dist/src/main.js"></script>
 
 <body>
   <div id="container">
@@ -46,5 +54,8 @@ html, body {
     </div>
     <div id="toolbar">t o o l b a r</div>
   </div>
+
+  <span id="tooltip"></span>
+
 </body>
 

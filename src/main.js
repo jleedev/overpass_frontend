@@ -1,7 +1,3 @@
-import { MapboxLayer } from "@deck.gl/mapbox";
-import { Deck } from "@deck.gl/core";
-import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
-import osmtogeojson from "osmtogeojson";
 import maplibregl from "maplibre-gl";
 
 const MAP_STYLE = {
@@ -13,63 +9,105 @@ const MAP_STYLE = {
     },
   },
   layers: [{ id: "simple-tiles", type: "raster", source: "raster-tiles" }],
-};
-
-const INITIAL_VIEW_STATE = {
-  latitude: 40.44,
-  longitude: -80,
+  center: [-80, 40.44],
   zoom: 9,
-  bearing: 0,
-  pitch: 0,
 };
 
-function load_basemap(el) {
-  const map = new maplibregl.Map({
-    container: el,
+function load_basemap(container) {
+  return new maplibregl.Map({
+    container,
+    antialias: true,
     style: MAP_STYLE,
-    center: [INITIAL_VIEW_STATE.longitude, INITIAL_VIEW_STATE.latitude],
-    zoom: INITIAL_VIEW_STATE.zoom,
-    bearing: INITIAL_VIEW_STATE.bearing,
-    pitch: INITIAL_VIEW_STATE.pitch,
   });
-  return map;
 }
 
-async function load_data() {
-  const f = await fetch("osm_data.json");
-  const j = await f.json();
-  const geojson = osmtogeojson(j);
-  return geojson;
+const overpass_worker = new Worker(new URL('overpass_worker.js', import.meta.url), {name: 'overpass_worker'});
+
+async function load_data(url, signal) {
+  url = new URL(url, location).toString();
+  console.log("posting message");
+  overpass_worker.postMessage({
+    value: {
+      url,
+    },
+  });
+  const result = await new Promise(resolve => {
+    overpass_worker.addEventListener('message', resolve, { once: true, signal });
+  });
+  const { data } = result;
+  console.log("got message from worker", data);
+  return data.value;
 }
 
-async function get_data_layer() {
-  const data = await load_data();
-  return new MapboxLayer({
-    id: "deckgl-geojson",
-    type: GeoJsonLayer,
+async function add_data_layer(map) {
+  const data = await load_data("osm_data3.json");
+  map.addSource("osm_data", {
+    type: "geojson",
     data,
-    pickable: true,
-    autoHighlight: true,
-    getLineWidth: 1,
-    lineWidthMinPixels: 5,
-    getLineColor: [255, 0, 255],
+    promoteId: "id",
+  });
+
+  map.addLayer({
+    type: "line",
+    id: "osm_data",
+    source: "osm_data",
+    layout: {
+      "line-join": "round",
+      "line-cap": "round",
+    },
+    paint: {
+      "line-color": [
+        "case",
+        ["boolean", ["feature-state", "hover"], false],
+        "#808",
+        "#f0f",
+      ],
+      "line-width": 5,
+    },
+  });
+
+  let hoveredId = null;
+
+  map.on("mouseenter", "osm_data", () => {
+    map.getCanvas().style.cursor = "pointer";
+  });
+
+  map.on("mouseleave", "osm_data", () => {
+    map.getCanvas().style.cursor = "";
+  });
+
+  map.on("mousemove", "osm_data", (e) => {
+    if (e.features.length > 0) {
+      if (hoveredId !== null) {
+        map.setFeatureState(
+          { source: "osm_data", id: hoveredId },
+          { hover: false }
+        );
+      }
+      hoveredId = e.features[0].id;
+      map.setFeatureState(
+        { source: "osm_data", id: hoveredId },
+        { hover: true }
+      );
+    }
+  });
+
+  map.on("mouseleave", "osm_data", () => {
+    if (hoveredId !== null) {
+      map.setFeatureState(
+        { source: "osm_data", id: hoveredId },
+        { hover: false }
+      );
+    }
+    hoveredId = null;
   });
 }
-
-const scatter_layer = new MapboxLayer({
-  id: "scatter-layer",
-  type: ScatterplotLayer,
-  data: [{ position: [-80, 40.44], color: [255, 0, 0], radius: 100 }],
-  getColor: (d) => d.color,
-  getRadius: (d) => d.radius,
-});
 
 async function init() {
   const el = document.getElementById("map");
   const map = await load_basemap(el);
-  map.addLayer(await get_data_layer());
-  map.addLayer(scatter_layer);
   window.map = map;
+  await add_data_layer(map);
 }
 
 document.addEventListener("DOMContentLoaded", init);

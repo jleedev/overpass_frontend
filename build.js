@@ -13,6 +13,17 @@ console.log(
       bundle: true,
       minify: true,
       sourcemap: true,
+      format: "esm",
+    }),
+    esbuild.build({
+      entryPoints: [
+        "src/overpass_worker.js",
+        "node_modules/osmtogeojson/index.js",
+      ],
+      outdir: "dist/",
+      bundle: true,
+      minify: true,
+      sourcemap: true,
     }),
     esbuild.build({
       entryPoints: [
