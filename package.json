@@ -5,13 +5,13 @@
     "@popperjs/core": "^2.11.0",
     "bootstrap": "^5.1.3",
     "maplibre-gl": "2.0.0-pre.6",
-    "osmtogeojson": "^3.0.0-beta.4",
-    "prettier": "^2.5.1"
+    "osmtogeojson": "^3.0.0-beta.4"
   },
   "scripts": {
     "build": "node build.js"
   },
   "devDependencies": {
-    "esbuild": "^0.14.2"
+    "esbuild": "^0.14.2",
+    "prettier": "^2.5.1"
   }
 }

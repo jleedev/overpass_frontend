@@ -25,17 +25,47 @@ function load_basemap(container) {
   return map;
 }
 
-const overpass_worker = new Worker(new URL('overpass_worker.js', import.meta.url), {name: 'overpass_worker'});
+const overpass_worker = new Worker(
+  new URL("overpass_worker.js", import.meta.url),
+  { name: "overpass_worker" }
+);
 
 async function executeScript(txt) {
   overpass_worker.postMessage({
     txt,
   });
-  const data = await new Promise(resolve => {
-    overpass_worker.addEventListener('message', ({ data }) => resolve(data), { once: true });
+  const data = await new Promise((resolve) => {
+    overpass_worker.addEventListener("message", ({ data }) => resolve(data), {
+      once: true,
+    });
   });
   return data.value;
 }
+
+let hoveredId = null;
+
+const handleMouseMove = (e) => {
+  if (e.features.length > 0) {
+    if (hoveredId !== null) {
+      map.setFeatureState(
+        { source: "osm_data", id: hoveredId },
+        { hover: false }
+      );
+    }
+    hoveredId = e.features[0].id;
+    map.setFeatureState({ source: "osm_data", id: hoveredId }, { hover: true });
+  }
+};
+
+const handleMouseLeave = () => {
+  if (hoveredId !== null) {
+    map.setFeatureState(
+      { source: "osm_data", id: hoveredId },
+      { hover: false }
+    );
+  }
+  hoveredId = null;
+};
 
 function add_data_layer(data) {
   map.addSource("osm_data", {
@@ -45,13 +75,23 @@ function add_data_layer(data) {
   });
 
   map.addLayer({
-    type: "line",
-    id: "osm_data",
+    type: "fill",
+    id: "osm_data_fill",
     source: "osm_data",
-    layout: {
-      "line-join": "round",
-      "line-cap": "round",
+    paint: {
+      "fill-color": [
+        "case",
+        ["boolean", ["feature-state", "hover"], false],
+        "rgba(128,0,128,0.5)",
+        "rgba(255,0,255,0.5)",
+      ],
     },
+  });
+
+  map.addLayer({
+    type: "line",
+    id: "osm_data_line",
+    source: "osm_data",
     paint: {
       "line-color": [
         "case",
@@ -63,51 +103,30 @@ function add_data_layer(data) {
     },
   });
 
-  let hoveredId = null;
+  for (const layer of ["osm_data_line", "osm_data_fill"]) {
+    map.on("mouseenter", layer, () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
 
-  map.on("mouseenter", "osm_data", () => {
-    map.getCanvas().style.cursor = "pointer";
-  });
+    map.on("mouseleave", layer, () => {
+      map.getCanvas().style.cursor = "";
+    });
 
-  map.on("mouseleave", "osm_data", () => {
-    map.getCanvas().style.cursor = "";
-  });
-
-  map.on("mousemove", "osm_data", (e) => {
-    if (e.features.length > 0) {
-      if (hoveredId !== null) {
-        map.setFeatureState(
-          { source: "osm_data", id: hoveredId },
-          { hover: false }
-        );
-      }
-      hoveredId = e.features[0].id;
-      map.setFeatureState(
-        { source: "osm_data", id: hoveredId },
-        { hover: true }
-      );
-    }
-  });
-
-  map.on("mouseleave", "osm_data", () => {
-    if (hoveredId !== null) {
-      map.setFeatureState(
-        { source: "osm_data", id: hoveredId },
-        { hover: false }
-      );
-    }
-    hoveredId = null;
-  });
+    map.on("mousemove", layer, handleMouseMove);
+    map.on("mouseleave", layer, handleMouseLeave);
+  }
 }
 
 async function btnRunClick() {
-  const progressModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('progressModal'));
+  const progressModal = bootstrap.Modal.getOrCreateInstance(
+    document.getElementById("progressModal")
+  );
   progressModal.show();
 
   const [[xmin, ymin], [xmax, ymax]] = map.getBounds().toArray();
-  const bbox = [ymin, xmin, ymax, xmax].join(',');
+  const bbox = [ymin, xmin, ymax, xmax].join(",");
   const src = document.getElementById("txtEditor").value;
-  const builtScript = src.replaceAll('{{bbox}}', bbox);
+  const builtScript = src.replaceAll("{{bbox}}", bbox);
   const data = await executeScript(builtScript);
   add_data_layer(data);
   progressModal.hide();
@@ -121,4 +140,3 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
-
