@@ -105,7 +105,7 @@ async function btnRunClick() {
   progressModal.show();
 
   const [[xmin, ymin], [xmax, ymax]] = map.getBounds().toArray();
-  const bbox = [xmin, ymin, xmax, ymax].join(',');
+  const bbox = [ymin, xmin, ymax, xmax].join(',');
   const src = document.getElementById("txtEditor").value;
   const builtScript = src.replaceAll('{{bbox}}', bbox);
   const data = await executeScript(builtScript);
