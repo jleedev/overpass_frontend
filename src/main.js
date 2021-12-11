@@ -1,4 +1,6 @@
 import maplibregl from "maplibre-gl";
+import * as bootstrap from "bootstrap";
+export { bootstrap };
 
 const MAP_STYLE = {
   version: 8,
@@ -14,33 +16,28 @@ const MAP_STYLE = {
 };
 
 function load_basemap(container) {
-  return new maplibregl.Map({
+  const map = new maplibregl.Map({
     container,
     antialias: true,
     style: MAP_STYLE,
   });
+  map.addControl(new maplibregl.ScaleControl());
+  return map;
 }
 
 const overpass_worker = new Worker(new URL('overpass_worker.js', import.meta.url), {name: 'overpass_worker'});
 
-async function load_data(url, signal) {
-  url = new URL(url, location).toString();
-  console.log("posting message");
+async function executeScript(txt) {
   overpass_worker.postMessage({
-    value: {
-      url,
-    },
+    txt,
   });
-  const result = await new Promise(resolve => {
-    overpass_worker.addEventListener('message', resolve, { once: true, signal });
+  const data = await new Promise(resolve => {
+    overpass_worker.addEventListener('message', ({ data }) => resolve(data), { once: true });
   });
-  const { data } = result;
-  console.log("got message from worker", data);
   return data.value;
 }
 
-async function add_data_layer(map) {
-  const data = await load_data("osm_data3.json");
+function add_data_layer(data) {
   map.addSource("osm_data", {
     type: "geojson",
     data,
@@ -103,11 +100,25 @@ async function add_data_layer(map) {
   });
 }
 
+async function btnRunClick() {
+  const progressModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('progressModal'));
+  progressModal.show();
+
+  const [[xmin, ymin], [xmax, ymax]] = map.getBounds().toArray();
+  const bbox = [xmin, ymin, xmax, ymax].join(',');
+  const src = document.getElementById("txtEditor").value;
+  const builtScript = src.replaceAll('{{bbox}}', bbox);
+  const data = await executeScript(builtScript);
+  add_data_layer(data);
+  progressModal.hide();
+}
+
 async function init() {
   const el = document.getElementById("map");
   const map = await load_basemap(el);
   window.map = map;
-  await add_data_layer(map);
+  document.getElementById("btnRun").addEventListener("click", btnRunClick);
 }
 
 document.addEventListener("DOMContentLoaded", init);
+

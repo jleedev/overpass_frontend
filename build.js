@@ -7,7 +7,6 @@ console.log(
     esbuild.build({
       entryPoints: [
         "src/main.js",
-        "node_modules/bootstrap/dist/js/bootstrap.bundle.js",
       ],
       outdir: "dist/",
       bundle: true,
@@ -18,7 +17,6 @@ console.log(
     esbuild.build({
       entryPoints: [
         "src/overpass_worker.js",
-        "node_modules/osmtogeojson/index.js",
       ],
       outdir: "dist/",
       bundle: true,
