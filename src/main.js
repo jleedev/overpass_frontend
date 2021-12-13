@@ -2,6 +2,17 @@ import maplibregl from "maplibre-gl";
 import * as bootstrap from "bootstrap";
 export { bootstrap };
 
+function showError(txt) {
+  const errorModalEle = document.getElementById("errorModal");
+  const errorModal = bootstrap.Modal.getOrCreateInstance(errorModalEle);
+  errorModalEle.querySelector(".modal-body p").textContent = txt;
+  errorModal.show();
+}
+
+window.onunhandledrejection = ({ reason }) => {
+  showError(reason.stack);
+};
+
 const MAP_STYLE = {
   version: 8,
   sources: {
@@ -34,12 +45,31 @@ async function executeScript(txt) {
   overpass_worker.postMessage({
     txt,
   });
-  const data = await new Promise((resolve) => {
-    overpass_worker.addEventListener("message", ({ data }) => resolve(data), {
-      once: true,
-    });
+  const messagesContainer = document.querySelector('#messages');
+  messagesContainer.textContent = '';
+  const data = await new Promise((resolve, reject) => {
+    const onMessage = ({ data }) => {
+      switch (data.type) {
+        case "success":
+          resolve(data.value);
+          overpass_worker.removeEventListener("message", onMessage);
+          break;
+        case "failure":
+          reject(data.reason);
+          overpass_worker.removeEventListener("message", onMessage);
+          break;
+        case "progress":
+          const li = document.createElement('li');
+          li.textContent = data.message;
+          messagesContainer.append(li);
+          break;
+        default:
+          throw new TypeError(data.type);
+      }
+    };
+    overpass_worker.addEventListener("message", onMessage);
   });
-  return data.value;
+  return data;
 }
 
 let hoveredId = null;
@@ -75,6 +105,27 @@ function add_data_layer(data) {
   });
 
   map.addLayer({
+    type: "circle",
+    id: "osm_data_point",
+    source: "osm_data",
+    paint: {
+      /*
+      "circle-color": [
+        "case",
+        ["boolean", ["feature-state", "hover"], false],
+        "#808",
+        "#f0f",
+      ],
+      "circle-radius": 10,
+      */
+      'circle-color': '#11b4da',
+      'circle-radius': 4,
+      'circle-stroke-width': 1,
+      'circle-stroke-color': '#fff'
+    },
+  });
+
+  map.addLayer({
     type: "fill",
     id: "osm_data_fill",
     source: "osm_data",
@@ -103,7 +154,7 @@ function add_data_layer(data) {
     },
   });
 
-  for (const layer of ["osm_data_line", "osm_data_fill"]) {
+  for (const layer of ["osm_data_line", "osm_data_fill", "osm_data_point"]) {
     map.on("mouseenter", layer, () => {
       map.getCanvas().style.cursor = "pointer";
     });
@@ -128,7 +179,12 @@ async function btnRunClick() {
   const src = document.getElementById("txtEditor").value;
   const builtScript = src.replaceAll("{{bbox}}", bbox);
   const data = await executeScript(builtScript);
-  add_data_layer(data);
+
+  if (map.getSource("osm_data")) {
+    map.getSource("osm_data").setData(data);
+  } else {
+    add_data_layer(data);
+  }
   progressModal.hide();
 }
 
