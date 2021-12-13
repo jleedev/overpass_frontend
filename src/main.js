@@ -109,17 +109,18 @@ function add_data_layer(data) {
     id: "osm_data_point",
     source: "osm_data",
     paint: {
-      /*
       "circle-color": [
         "case",
         ["boolean", ["feature-state", "hover"], false],
         "#808",
         "#f0f",
       ],
-      "circle-radius": 10,
-      */
-      'circle-color': '#11b4da',
-      'circle-radius': 4,
+      "circle-radius": [
+        "case",
+        ["boolean", ["feature-state", "hover"], false],
+        10,
+        15,
+      ],
       'circle-stroke-width': 1,
       'circle-stroke-color': '#fff'
     },
