@@ -1,3 +1,4 @@
+import {} from "dotenv/config";
 import esbuild from "esbuild";
 
 console.log(performance.now());
@@ -5,9 +6,10 @@ console.log(performance.now());
 console.log(
   ...(await Promise.all([
     esbuild.build({
-      entryPoints: [
-        "src/main.js",
-      ],
+      entryPoints: ["src/main.js"],
+      define: {
+        MAPTILER_KEY: `"${process.env.MAPTILER_KEY}"`,
+      },
       outdir: "dist/",
       bundle: true,
       minify: true,
@@ -15,9 +17,7 @@ console.log(
       format: "esm",
     }),
     esbuild.build({
-      entryPoints: [
-        "src/overpass_worker.js",
-      ],
+      entryPoints: ["src/overpass_worker.js"],
       outdir: "dist/",
       bundle: true,
       minify: true,

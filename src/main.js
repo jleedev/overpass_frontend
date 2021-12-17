@@ -13,12 +13,14 @@ window.onunhandledrejection = ({ reason }) => {
   showError(reason.stack);
 };
 
+const TILE_JSON = `https://api.maptiler.com/maps/toner/tiles.json?key=${MAPTILER_KEY}`;
+
 const MAP_STYLE = {
   version: 8,
   sources: {
     "raster-tiles": {
       type: "raster",
-      url: "https://api.maptiler.com/maps/toner/tiles.json?key=j20l9qIApPvfmDy7ZuPM",
+      url: TILE_JSON,
     },
   },
   layers: [{ id: "simple-tiles", type: "raster", source: "raster-tiles" }],
