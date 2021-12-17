@@ -33,6 +33,10 @@ function load_basemap(container) {
     style: MAP_STYLE,
   });
   map.addControl(new maplibregl.ScaleControl());
+  // disable map rotation using right click + drag
+  map.dragRotate.disable();
+  // disable map rotation using touch rotation gesture
+  map.touchZoomRotate.disableRotation();
   return map;
 }
 
@@ -45,8 +49,8 @@ async function executeScript(txt) {
   overpass_worker.postMessage({
     txt,
   });
-  const messagesContainer = document.querySelector('#messages');
-  messagesContainer.textContent = '';
+  const messagesContainer = document.querySelector("#messages");
+  messagesContainer.textContent = "";
   const data = await new Promise((resolve, reject) => {
     const onMessage = ({ data }) => {
       switch (data.type) {
@@ -59,7 +63,7 @@ async function executeScript(txt) {
           overpass_worker.removeEventListener("message", onMessage);
           break;
         case "progress":
-          const li = document.createElement('li');
+          const li = document.createElement("li");
           li.textContent = data.message;
           messagesContainer.append(li);
           break;
@@ -105,38 +109,18 @@ function add_data_layer(data) {
   });
 
   map.addLayer({
-    type: "circle",
-    id: "osm_data_point",
-    source: "osm_data",
-    paint: {
-      "circle-color": [
-        "case",
-        ["boolean", ["feature-state", "hover"], false],
-        "#808",
-        "#f0f",
-      ],
-      "circle-radius": [
-        "case",
-        ["boolean", ["feature-state", "hover"], false],
-        10,
-        15,
-      ],
-      'circle-stroke-width': 1,
-      'circle-stroke-color': '#fff'
-    },
-  });
-
-  map.addLayer({
     type: "fill",
     id: "osm_data_fill",
     source: "osm_data",
+    filter: ["in", ["geometry-type"], ["literal", ["Polygon", "MultiPolygon"]]],
     paint: {
       "fill-color": [
         "case",
         ["boolean", ["feature-state", "hover"], false],
-        "rgba(128,0,128,0.5)",
-        "rgba(255,0,255,0.5)",
+        "rgba(128,128,0,0.5)",
+        "rgba(255,255,0,0.5)",
       ],
+      "fill-outline-color": "#f0f",
     },
   });
 
@@ -144,6 +128,11 @@ function add_data_layer(data) {
     type: "line",
     id: "osm_data_line",
     source: "osm_data",
+    filter: [
+      "in",
+      ["geometry-type"],
+      ["literal", ["LineString", "MultiLineString"]],
+    ],
     paint: {
       "line-color": [
         "case",
@@ -152,6 +141,25 @@ function add_data_layer(data) {
         "#f0f",
       ],
       "line-width": 5,
+    },
+  });
+
+  map.addLayer({
+    type: "circle",
+    id: "osm_data_point",
+    source: "osm_data",
+    filter: ["in", ["geometry-type"], ["literal", ["Point", "MultiPoint"]]],
+    paint: {
+      "circle-color": [
+        "case",
+        ["boolean", ["feature-state", "hover"], false],
+        "#808",
+        "#f0f",
+      ],
+      "circle-radius": 5,
+      "circle-pitch-alignment": "map",
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "#000",
     },
   });
 
