@@ -175,6 +175,17 @@ function add_data_layer(data) {
     map.on("mousemove", layer, handleMouseMove);
     map.on("mouseleave", layer, handleMouseLeave);
   }
+
+  map.on("click", (e) => {
+    const features = new Map(
+      map.queryRenderedFeatures(e.point).map((feat) => [feat.id, feat])
+    );
+    console.log(
+      ...[...features.values()].map((feat) =>
+        [feat.id, feat.properties.name].join(" ")
+      )
+    );
+  });
 }
 
 async function btnRunClick() {
