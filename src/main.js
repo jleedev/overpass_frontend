@@ -177,14 +177,19 @@ function add_data_layer(data) {
   }
 
   map.on("click", (e) => {
-    const features = new Map(
-      map.queryRenderedFeatures(e.point).map((feat) => [feat.id, feat])
-    );
-    console.log(
-      ...[...features.values()].map((feat) =>
-        [feat.id, feat.properties.name].join(" ")
-      )
-    );
+    const query = map.queryRenderedFeatures(e.point);
+    if (query.length === 0) {
+      return;
+    }
+    const features = new Map(query.map((feat) => [feat.id, feat]));
+    const infoText = [...features.values()]
+      .map((feat) => [feat.id, feat.properties.name].join(" "))
+      .join("\n");
+
+    const infoModalEle = document.getElementById("infoModal");
+    infoModalEle.querySelector(".modal-body p").textContent = infoText;
+    const infoModal = bootstrap.Modal.getOrCreateInstance(infoModalEle);
+    infoModal.show();
   });
 }
 
