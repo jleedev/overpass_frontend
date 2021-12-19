@@ -33,6 +33,8 @@ function load_basemap(container) {
     container,
     antialias: true,
     style: MAP_STYLE,
+    maxBounds: [-180, -85.051129, 180, 85.051129],
+    renderWorldCopies: false,
   });
   map.addControl(new maplibregl.ScaleControl());
   // disable map rotation using right click + drag
