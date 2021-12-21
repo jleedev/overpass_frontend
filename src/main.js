@@ -13,20 +13,58 @@ window.onunhandledrejection = ({ reason }) => {
   showError(reason.stack);
 };
 
-const TILE_JSON = `https://api.maptiler.com/maps/toner/tiles.json?key=${MAPTILER_KEY}`;
+const OSM_TILES = {
+  type: "raster",
+  tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+  tileSize: 256,
+};
+
+const STAMEN_TONER = {
+  type: "raster",
+  tiles: [
+    "https://stamen-tiles-a.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
+    "https://stamen-tiles-b.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
+    "https://stamen-tiles-c.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
+    "https://stamen-tiles-d.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
+  ],
+  tileSize: 256,
+};
+
+const MAPTILER_TONER = {
+  type: "raster",
+  url: `https://api.maptiler.com/maps/toner/tiles.json?key=${MAPTILER_KEY}`,
+};
 
 const MAP_STYLE = {
   version: 8,
   sources: {
-    "raster-tiles": {
-      type: "raster",
-      url: TILE_JSON,
-    },
+    "raster-tiles": STAMEN_TONER,
   },
   layers: [{ id: "simple-tiles", type: "raster", source: "raster-tiles" }],
   center: [-80, 40.44],
   zoom: 9,
 };
+
+class HelloWorldControl {
+  onAdd(map) {
+    this._map = map;
+    this._container = document.createElement("div");
+    this._container.className = "maplibregl-ctrl";
+    this._container.innerHTML = `
+      <div class="btn-group" role="group" aria-label="Basic example">
+        <button type="button" class="btn btn-light">Foo</button>
+        <button type="button" class="btn btn-light">Bar</button>
+        <button type="button" class="btn btn-light">Baz</button>
+      </div>
+    `;
+    return this._container;
+  }
+
+  onRemove() {
+    this._container.parentNode.removeChild(this._container);
+    this._map = undefined;
+  }
+}
 
 function load_basemap(container) {
   const map = new maplibregl.Map({
@@ -37,6 +75,7 @@ function load_basemap(container) {
     renderWorldCopies: false,
   });
   map.addControl(new maplibregl.ScaleControl());
+  map.addControl(new HelloWorldControl(), "top-right");
   // disable map rotation using right click + drag
   map.dragRotate.disable();
   // disable map rotation using touch rotation gesture
@@ -56,23 +95,23 @@ async function executeScript(txt) {
   const messagesContainer = document.querySelector("#messages");
   messagesContainer.textContent = "";
   const data = await new Promise((resolve, reject) => {
-    const onMessage = ({ data }) => {
-      switch (data.type) {
+    const onMessage = ({ data: { type, value } }) => {
+      switch (type) {
         case "success":
-          resolve(data.value);
+          resolve(value);
           overpass_worker.removeEventListener("message", onMessage);
           break;
         case "failure":
-          reject(data.reason);
+          reject(value);
           overpass_worker.removeEventListener("message", onMessage);
           break;
         case "progress":
           const li = document.createElement("li");
-          li.textContent = data.message;
+          li.textContent = value;
           messagesContainer.append(li);
           break;
         default:
-          throw new TypeError(data.type);
+          throw new TypeError(type);
       }
     };
     overpass_worker.addEventListener("message", onMessage);
@@ -201,20 +240,23 @@ async function btnRunClick() {
   const progressModal = bootstrap.Modal.getOrCreateInstance(
     document.getElementById("progressModal")
   );
-  progressModal.show();
+  try {
+    progressModal.show();
 
-  const [[xmin, ymin], [xmax, ymax]] = map.getBounds().toArray();
-  const bbox = [ymin, xmin, ymax, xmax].join(",");
-  const src = document.getElementById("txtEditor").value;
-  const builtScript = src.replaceAll("{{bbox}}", bbox);
-  const data = await executeScript(builtScript);
+    const [[xmin, ymin], [xmax, ymax]] = map.getBounds().toArray();
+    const bbox = [ymin, xmin, ymax, xmax].join(",");
+    const src = document.getElementById("txtEditor").value;
+    const builtScript = src.replaceAll("{{bbox}}", bbox);
+    const data = await executeScript(builtScript);
 
-  if (map.getSource("osm_data")) {
-    map.getSource("osm_data").setData(data);
-  } else {
-    add_data_layer(data);
+    if (map.getSource("osm_data")) {
+      map.getSource("osm_data").setData(data);
+    } else {
+      add_data_layer(data);
+    }
+  } finally {
+    progressModal.hide();
   }
-  progressModal.hide();
 }
 
 async function init() {
