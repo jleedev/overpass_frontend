@@ -19,6 +19,18 @@ const OSM_TILES = {
   tileSize: 256,
 };
 
+const CARTO_POSITRON = {
+  type: "raster",
+  tiles: [
+    "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
+    "https://cartodb-basemaps-b.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
+    "https://cartodb-basemaps-c.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
+    "https://cartodb-basemaps-d.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
+  ],
+  tileSize: 256,
+  attribution: "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
+};
+
 const STAMEN_TONER = {
   type: "raster",
   tiles: [
@@ -38,7 +50,7 @@ const MAPTILER_TONER = {
 const MAP_STYLE = {
   version: 8,
   sources: {
-    "raster-tiles": STAMEN_TONER,
+    "raster-tiles": CARTO_POSITRON,
   },
   layers: [{ id: "simple-tiles", type: "raster", source: "raster-tiles" }],
   center: [-80, 40.44],
