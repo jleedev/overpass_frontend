@@ -1,5 +1,9 @@
 import osmtogeojson from "osmtogeojson";
 
+import * as turfHelpers from "@turf/helpers";
+import * as turfMeta from "@turf/meta";
+import pointOnFeature from "@turf/point-on-feature";
+
 self.onmessage = async (event) => {
   const it = handleMessage(event)[Symbol.asyncIterator]();
   try {
@@ -13,19 +17,19 @@ self.onmessage = async (event) => {
       }
     }
   } catch (value) {
+    console.error(value);
     self.postMessage({ type: "failure", value });
   }
 };
 
 async function* handleMessage({ data }) {
-  asdf;
   const { txt } = data;
-  const body = new URLSearchParams();
-  body.set("data", txt);
-  performance.mark("start");
+
   const req = await fetch(`https://overpass-api.de/api/interpreter`, {
     method: "POST",
-    body,
+    body: new URLSearchParams({
+      data: txt,
+    }),
   });
 
   yield "Reading response…";
@@ -42,8 +46,26 @@ async function* handleMessage({ data }) {
 
 const doOverpassRequest = () => {};
 
+const getRawData = () => {};
+
 const getRegularGeojson = () => {};
 
 const getCentroidsGeojson = () => {};
 
 const getBbox = () => {};
+
+const replaceGeometryWithPoints = (geojson) => {
+  return turfHelpers.featureCollection(
+    turfMeta.featureReduce(
+      geojson,
+      (previousValue, currentFeature) => {
+        const { id, properties } = currentFeature;
+        const { geometry } = pointOnFeature(currentFeature);
+        const feature = turfHelpers.feature(geometry, properties, { id });
+        previousValue.push(feature);
+        return previousValue;
+      },
+      []
+    )
+  );
+};

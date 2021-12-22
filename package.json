@@ -12,5 +12,8 @@
   },
   "scripts": {
     "build": "node build.js"
+  },
+  "dependencies": {
+    "@turf/turf": "^6.5.0"
   }
 }
