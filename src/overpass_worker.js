@@ -38,10 +38,12 @@ async function* handleMessage({ data }) {
 
   yield `Received ${JSON.stringify(osm_data).length} bytes`;
   yield "Converting to GeoJSON…";
-
   const geojson = osmtogeojson(osm_data);
 
-  return geojson;
+  yield "Finding centroids…";
+  const centroids = replaceGeometryWithPoints(geojson);
+
+  return {geojson, centroids};
 }
 
 const doOverpassRequest = () => {};

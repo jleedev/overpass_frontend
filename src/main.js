@@ -64,9 +64,14 @@ class HelloWorldControl {
     this._container.className = "maplibregl-ctrl";
     this._container.innerHTML = `
       <div class="btn-group" role="group" aria-label="Basic example">
-        <button type="button" class="btn btn-light">Foo</button>
-        <button type="button" class="btn btn-light">Bar</button>
-        <button type="button" class="btn btn-light">Baz</button>
+        <input type="radio" name="geometry-mode" class="btn-check" id="geometry-mode-point" autocomplete="off">
+        <label class="btn btn-outline-primary" for="geometry-mode-point" aria-label="Points" title="Points">...</label><br>
+
+        <input type="radio" name="geometry-mode" class="btn-check" id="geometry-mode-cluster" autocomplete="off">
+        <label class="btn btn-outline-primary" for="geometry-mode-cluster" aria-label="Clusters" title="Clusters">.o.</label><br>
+
+        <input type="radio" name="geometry-mode" class="btn-check" id="geometry-mode-full" autocomplete="off">
+        <label class="btn btn-outline-primary" for="geometry-mode-full" aria-label="Geometry" title="Geometry">@</label><br>
       </div>
     `;
     return this._container;
@@ -156,10 +161,23 @@ const handleMouseLeave = () => {
   hoveredId = null;
 };
 
-function add_data_layer(data) {
+function build_data_layers(map) {
   map.addSource("osm_data", {
     type: "geojson",
-    data,
+    data: { type: "FeatureCollection", features: [], },
+    promoteId: "id",
+  });
+
+  map.addSource("osm_data_centroids", {
+    type: "geojson",
+    data: { type: "FeatureCollection", features: [], },
+    promoteId: "id",
+  });
+
+  map.addSource("osm_data_centroid_clusters", {
+    type: "geojson",
+    cluster: true,
+    data: { type: "FeatureCollection", features: [], },
     promoteId: "id",
   });
 
@@ -218,6 +236,44 @@ function add_data_layer(data) {
     },
   });
 
+  map.addLayer({
+    type: "circle",
+    id: "osm_data_centroids",
+    source: "osm_data_centroids",
+    filter: ["in", ["geometry-type"], ["literal", ["Point", "MultiPoint"]]],
+    paint: {
+      "circle-color": [
+        "case",
+        ["boolean", ["feature-state", "hover"], false],
+        "#808",
+        "#f0f",
+      ],
+      "circle-radius": 5,
+      "circle-pitch-alignment": "map",
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "#000",
+    },
+  });
+
+  map.addLayer({
+    type: "circle",
+    id: "osm_data_centroid_clusters",
+    source: "osm_data_centroid_clusters",
+    filter: ["in", ["geometry-type"], ["literal", ["Point", "MultiPoint"]]],
+    paint: {
+      "circle-color": [
+        "case",
+        ["boolean", ["feature-state", "hover"], false],
+        "#808",
+        "#f0f",
+      ],
+      "circle-radius": 5,
+      "circle-pitch-alignment": "map",
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "#000",
+    },
+  });
+
   for (const layer of ["osm_data_line", "osm_data_fill", "osm_data_point"]) {
     map.on("mouseenter", layer, () => {
       map.getCanvas().style.cursor = "pointer";
@@ -259,13 +315,11 @@ async function btnRunClick() {
     const bbox = [ymin, xmin, ymax, xmax].join(",");
     const src = document.getElementById("txtEditor").value;
     const builtScript = src.replaceAll("{{bbox}}", bbox);
-    const data = await executeScript(builtScript);
+    const {geojson, centroids} = await executeScript(builtScript);
 
-    if (map.getSource("osm_data")) {
-      map.getSource("osm_data").setData(data);
-    } else {
-      add_data_layer(data);
-    }
+    map.getSource("osm_data").setData(geojson);
+    map.getSource("osm_data_centroids").setData(centroids);
+    map.getSource("osm_data_centroid_clusters").setData(centroids);
   } finally {
     progressModal.hide();
   }
@@ -273,8 +327,10 @@ async function btnRunClick() {
 
 async function init() {
   const el = document.getElementById("map");
-  const map = await load_basemap(el);
+  const map = load_basemap(el);
   window.map = map;
+  await new Promise(resolve => map.once("load", resolve));
+  build_data_layers(map);
   document.getElementById("btnRun").addEventListener("click", btnRunClick);
 }
 
