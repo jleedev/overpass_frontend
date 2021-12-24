@@ -9,7 +9,13 @@ function showError(txt) {
   errorModal.show();
 }
 
+window.onerror = (_message, _source, _lineno, _colno, error) => {
+  console.error(error);
+  showError(error.stack);
+};
+
 window.onunhandledrejection = ({ reason }) => {
+  console.error(reason);
   showError(reason.stack);
 };
 
@@ -28,7 +34,8 @@ const CARTO_POSITRON = {
     "https://cartodb-basemaps-d.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
   ],
   tileSize: 256,
-  attribution: "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
+  attribution:
+    "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
 };
 
 const STAMEN_TONER = {
@@ -57,30 +64,81 @@ const MAP_STYLE = {
   zoom: 9,
 };
 
-class HelloWorldControl {
+class LayerSelectionControl extends maplibregl.Evented {
+  constructor() {
+    super();
+    this._handleSelectionChange = this._handleSelectionChange.bind(this);
+  }
+
   onAdd(map) {
     this._map = map;
     this._container = document.createElement("div");
     this._container.className = "maplibregl-ctrl";
     this._container.innerHTML = `
-      <div class="btn-group" role="group" aria-label="Basic example">
-        <input type="radio" name="geometry-mode" class="btn-check" id="geometry-mode-point" autocomplete="off">
-        <label class="btn btn-outline-primary" for="geometry-mode-point" aria-label="Points" title="Points">...</label><br>
+      <div class="btn-group" role="group" aria-label="Geometry Mode">
+        <input type="radio" class="btn-check" name="geometry-mode" value="points" id="geometry-mode-point" autocomplete="off">
+        <label class="btn btn-outline-secondary" for="geometry-mode-point" aria-label="Points" title="Points">✨</label>
 
-        <input type="radio" name="geometry-mode" class="btn-check" id="geometry-mode-cluster" autocomplete="off">
-        <label class="btn btn-outline-primary" for="geometry-mode-cluster" aria-label="Clusters" title="Clusters">.o.</label><br>
+        <input type="radio" class="btn-check" name="geometry-mode" value="clusters" id="geometry-mode-cluster" autocomplete="off">
+        <label class="btn btn-outline-secondary" for="geometry-mode-cluster" aria-label="Clusters" title="Clusters">🍇</label>
 
-        <input type="radio" name="geometry-mode" class="btn-check" id="geometry-mode-full" autocomplete="off">
-        <label class="btn btn-outline-primary" for="geometry-mode-full" aria-label="Geometry" title="Geometry">@</label><br>
+        <input checked type="radio" class="btn-check" name="geometry-mode" value="geometry" id="geometry-mode-full" autocomplete="off">
+        <label class="btn btn-outline-secondary" for="geometry-mode-full" aria-label="Geometry" title="Geometry">🌐</label>
       </div>
     `;
+    this._container
+      .querySelectorAll("input")
+      .forEach((x) =>
+        x.addEventListener("change", this._handleSelectionChange)
+      );
     return this._container;
   }
 
+  _handleSelectionChange(e) {
+    if (e.target.value !== this.selection) {
+      const oldValue = this.selection;
+      const newValue = (this.selection = e.target.value);
+      this.fire("change", { oldValue, newValue });
+    }
+  }
+
   onRemove() {
+    this._container
+      .querySelectorAll("input")
+      .forEach((x) =>
+        x.removeEventListener("change", this._handleSelectionChange)
+      );
     this._container.parentNode.removeChild(this._container);
     this._map = undefined;
   }
+}
+
+function set_layer_visibility(map, selection) {
+  map.setLayoutProperty(
+    "osm_data_fill",
+    "visibility",
+    selection == "geometry" ? "visible" : "none"
+  );
+  map.setLayoutProperty(
+    "osm_data_line",
+    "visibility",
+    selection == "geometry" ? "visible" : "none"
+  );
+  map.setLayoutProperty(
+    "osm_data_point",
+    "visibility",
+    selection == "geometry" ? "visible" : "none"
+  );
+  map.setLayoutProperty(
+    "osm_data_centroids",
+    "visibility",
+    selection == "points" ? "visible" : "none"
+  );
+  map.setLayoutProperty(
+    "osm_data_centroid_clusters",
+    "visibility",
+    selection == "clusters" ? "visible" : "none"
+  );
 }
 
 function load_basemap(container) {
@@ -92,7 +150,11 @@ function load_basemap(container) {
     renderWorldCopies: false,
   });
   map.addControl(new maplibregl.ScaleControl());
-  map.addControl(new HelloWorldControl(), "top-right");
+  const layer_selection_control = new LayerSelectionControl();
+  layer_selection_control.on("change", ({ newValue }) =>
+    set_layer_visibility(map, newValue)
+  );
+  map.addControl(layer_selection_control, "top-right");
   // disable map rotation using right click + drag
   map.dragRotate.disable();
   // disable map rotation using touch rotation gesture
@@ -164,20 +226,20 @@ const handleMouseLeave = () => {
 function build_data_layers(map) {
   map.addSource("osm_data", {
     type: "geojson",
-    data: { type: "FeatureCollection", features: [], },
+    data: { type: "FeatureCollection", features: [] },
     promoteId: "id",
   });
 
   map.addSource("osm_data_centroids", {
     type: "geojson",
-    data: { type: "FeatureCollection", features: [], },
+    data: { type: "FeatureCollection", features: [] },
     promoteId: "id",
   });
 
   map.addSource("osm_data_centroid_clusters", {
     type: "geojson",
     cluster: true,
-    data: { type: "FeatureCollection", features: [], },
+    data: { type: "FeatureCollection", features: [] },
     promoteId: "id",
   });
 
@@ -241,6 +303,9 @@ function build_data_layers(map) {
     id: "osm_data_centroids",
     source: "osm_data_centroids",
     filter: ["in", ["geometry-type"], ["literal", ["Point", "MultiPoint"]]],
+    layout: {
+      visibility: "none",
+    },
     paint: {
       "circle-color": [
         "case",
@@ -260,14 +325,17 @@ function build_data_layers(map) {
     id: "osm_data_centroid_clusters",
     source: "osm_data_centroid_clusters",
     filter: ["in", ["geometry-type"], ["literal", ["Point", "MultiPoint"]]],
+    layout: {
+      visibility: "none",
+    },
     paint: {
       "circle-color": [
         "case",
-        ["boolean", ["feature-state", "hover"], false],
-        "#808",
-        "#f0f",
+        ["boolean", ["get", "cluster"], false],
+        "#ff0",
+        "#0ff",
       ],
-      "circle-radius": 5,
+      "circle-radius": ["*", 5, ["sqrt", ["get", "point_count"]]],
       "circle-pitch-alignment": "map",
       "circle-stroke-width": 1,
       "circle-stroke-color": "#000",
@@ -304,6 +372,8 @@ function build_data_layers(map) {
   });
 }
 
+let resultBbox = undefined;
+
 async function btnRunClick() {
   const progressModal = bootstrap.Modal.getOrCreateInstance(
     document.getElementById("progressModal")
@@ -312,10 +382,15 @@ async function btnRunClick() {
     progressModal.show();
 
     const [[xmin, ymin], [xmax, ymax]] = map.getBounds().toArray();
-    const bbox = [ymin, xmin, ymax, xmax].join(",");
+    const bboxArg = [ymin, xmin, ymax, xmax].join(",");
     const src = document.getElementById("txtEditor").value;
-    const builtScript = src.replaceAll("{{bbox}}", bbox);
-    const {geojson, centroids} = await executeScript(builtScript);
+    const builtScript = src.replaceAll("{{bbox}}", bboxArg);
+    const { geojson, centroids, bbox } = await executeScript(builtScript);
+    resultBbox = bbox;
+    map.flyTo([
+      [resultBbox[0], resultBbox[1]],
+      [resultBbox[2], resultBbox[3]],
+    ]);
 
     map.getSource("osm_data").setData(geojson);
     map.getSource("osm_data_centroids").setData(centroids);
@@ -329,7 +404,7 @@ async function init() {
   const el = document.getElementById("map");
   const map = load_basemap(el);
   window.map = map;
-  await new Promise(resolve => map.once("load", resolve));
+  await new Promise((resolve) => map.once("load", resolve));
   build_data_layers(map);
   document.getElementById("btnRun").addEventListener("click", btnRunClick);
 }

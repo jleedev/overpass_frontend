@@ -1,10 +1,10 @@
 import {} from "dotenv/config";
 import esbuild from "esbuild";
 
-console.log(performance.now());
+performance.mark('build');
 
-console.log(
-  ...(await Promise.all([
+try {
+  await Promise.all([
     esbuild.build({
       entryPoints: ["src/main.js"],
       define: {
@@ -30,7 +30,9 @@ console.log(
       ],
       outdir: "dist/",
     }),
-  ]))
-);
+  ]);
+} catch {
+  process.exit(1);
+}
 
-console.log(performance.now());
+console.log(performance.measure('build').duration);
