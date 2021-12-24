@@ -38,6 +38,19 @@ const CARTO_POSITRON = {
     "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
 };
 
+const CARTO_DARK_MATTER = {
+  type: "raster",
+  tiles: [
+    "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+    "https://cartodb-basemaps-b.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+    "https://cartodb-basemaps-c.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+    "https://cartodb-basemaps-d.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+  ],
+  tileSize: 256,
+  attribution:
+    "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
+};
+
 const STAMEN_TONER = {
   type: "raster",
   tiles: [
@@ -54,12 +67,28 @@ const MAPTILER_TONER = {
   url: `https://api.maptiler.com/maps/toner/tiles.json?key=${MAPTILER_KEY}`,
 };
 
+const darkModeMatcher = matchMedia("(prefers-color-scheme: dark)");
+
 const MAP_STYLE = {
   version: 8,
   sources: {
-    "raster-tiles": CARTO_POSITRON,
+    "raster-tiles-light": CARTO_POSITRON,
+    "raster-tiles-dark": CARTO_DARK_MATTER,
   },
-  layers: [{ id: "simple-tiles", type: "raster", source: "raster-tiles" }],
+  layers: [
+    {
+      id: "light-tiles",
+      type: "raster",
+      source: "raster-tiles-light",
+      layout: { visibility: darkModeMatcher.matches ? "none" : "visible" },
+    },
+    {
+      id: "dark-tiles",
+      type: "raster",
+      source: "raster-tiles-dark",
+      layout: { visibility: darkModeMatcher.matches ? "visible" : "none" },
+    },
+  ],
   center: [-80, 40.44],
   zoom: 9,
 };
@@ -387,6 +416,7 @@ async function btnRunClick() {
     const builtScript = src.replaceAll("{{bbox}}", bboxArg);
     const { geojson, centroids, bbox } = await executeScript(builtScript);
     resultBbox = bbox;
+    debugger;
     map.flyTo([
       [resultBbox[0], resultBbox[1]],
       [resultBbox[2], resultBbox[3]],
@@ -405,6 +435,18 @@ async function init() {
   const map = load_basemap(el);
   window.map = map;
   await new Promise((resolve) => map.once("load", resolve));
+  darkModeMatcher.addEventListener("change", () => {
+    map.setLayoutProperty(
+      "light-tiles",
+      "visibility",
+      darkModeMatcher.matches ? "none" : "visible"
+    );
+    map.setLayoutProperty(
+      "dark-tiles",
+      "visibility",
+      darkModeMatcher.matches ? "visible" : "none"
+    );
+  });
   build_data_layers(map);
   document.getElementById("btnRun").addEventListener("click", btnRunClick);
 }
