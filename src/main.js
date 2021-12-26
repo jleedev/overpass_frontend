@@ -364,14 +364,20 @@ function build_data_layers(map) {
         "#ff0",
         "#0ff",
       ],
-      "circle-radius": ["*", 5, ["sqrt", ["get", "point_count"]]],
+      "circle-radius": ["min", 15, ["*", 5, ["sqrt", ["get", "point_count"]]]],
       "circle-pitch-alignment": "map",
       "circle-stroke-width": 1,
       "circle-stroke-color": "#000",
     },
   });
 
-  for (const layer of ["osm_data_line", "osm_data_fill", "osm_data_point"]) {
+  for (const layer of [
+    "osm_data_line",
+    "osm_data_fill",
+    "osm_data_point",
+    "osm_data_centroids",
+    "osm_data_centroid_clusters",
+  ]) {
     map.on("mouseenter", layer, () => {
       map.getCanvas().style.cursor = "pointer";
     });
@@ -384,11 +390,38 @@ function build_data_layers(map) {
     map.on("mouseleave", layer, handleMouseLeave);
   }
 
-  map.on("click", (e) => {
-    const query = map.queryRenderedFeatures(e.point);
+  map.on("click", "osm_data_centroid_clusters", async (e) => {
+    // Handle cluster expansion zoom
+    const query = map.queryRenderedFeatures(e.point, {
+      layers: ["osm_data_centroid_clusters"],
+      filter: ["==", ["get", "cluster"], true],
+    });
     if (query.length === 0) {
       return;
     }
+    const clusterId = query[0].properties.cluster_id;
+    const zoom = await new Promise((resolve, reject) => {
+      map
+        .getSource("osm_data_centroid_clusters")
+        .getClusterExpansionZoom(clusterId, (err, zoom) =>
+          err ? reject(err) : resolve(zoom)
+        );
+    });
+    map.easeTo({
+      center: query[0].geometry.coordinates,
+      zoom,
+    });
+  });
+
+  map.on("click", (e) => {
+    // Handle feature inspector
+    const query = map.queryRenderedFeatures(e.point, {
+      filter: ["!=", ["get", "cluster"], true],
+    });
+    if (query.length === 0) {
+      return;
+    }
+    console.debug("Feature inspector", ...query);
     const features = new Map(query.map((feat) => [feat.id, feat]));
     const infoText = [...features.values()]
       .map((feat) => [feat.id, feat.properties.name].join(" "))
@@ -416,11 +449,13 @@ async function btnRunClick() {
     const builtScript = src.replaceAll("{{bbox}}", bboxArg);
     const { geojson, centroids, bbox } = await executeScript(builtScript);
     resultBbox = bbox;
-    debugger;
-    map.flyTo([
-      [resultBbox[0], resultBbox[1]],
-      [resultBbox[2], resultBbox[3]],
-    ]);
+    map.fitBounds(
+      [
+        [resultBbox[0], resultBbox[1]],
+        [resultBbox[2], resultBbox[3]],
+      ],
+      { linear: false }
+    );
 
     map.getSource("osm_data").setData(geojson);
     map.getSource("osm_data_centroids").setData(centroids);
