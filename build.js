@@ -1,7 +1,10 @@
 import {} from "dotenv/config";
+import fs from "fs/promises";
 import esbuild from "esbuild";
 
 performance.mark('build');
+
+await fs.mkdir('dist/', { recursive: true });
 
 try {
   await Promise.all([
@@ -30,8 +33,10 @@ try {
       ],
       outdir: "dist/",
     }),
+    fs.copyFile("index.html", "dist/index.html"),
   ]);
-} catch {
+} catch (err) {
+  console.error(err);
   process.exit(1);
 }
 
