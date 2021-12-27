@@ -42,20 +42,9 @@
     <div id="editor" class="col-md-4 flex-grow-1">
       <div class="row flex-column h-100">
         <textarea id="txtEditor" class="form-control form-control-sm flex-grow-1">
-[out:json];
-
-// Allegheny County
-// rel(2563472);
-
-// Mount Lebanon
-rel(188058);
-
-map_to_area;
-
-way(area)[highway];
-
+[out:json][bbox:{{bbox}}];
+nwr[leisure];
 out geom;
-
 </textarea>
       </div>
     </div>
