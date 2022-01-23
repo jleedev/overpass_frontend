@@ -35,7 +35,7 @@ const CARTO_POSITRON = {
   ],
   tileSize: 256,
   attribution:
-    "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
+    '© <a href="http://www.openstreetmap.org/copyright"> OpenStreetMap </a> contributors, © <a href="https://carto.com/about-carto/"> CARTO </a>',
 };
 
 const CARTO_DARK_MATTER = {
