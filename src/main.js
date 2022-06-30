@@ -28,10 +28,10 @@ const OSM_TILES = {
 const CARTO_POSITRON = {
   type: "raster",
   tiles: [
-    "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
-    "https://cartodb-basemaps-b.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
-    "https://cartodb-basemaps-c.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
-    "https://cartodb-basemaps-d.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png",
+    "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}{ratio}.png",
+    "https://cartodb-basemaps-b.global.ssl.fastly.net/light_all/{z}/{x}/{y}{ratio}.png",
+    "https://cartodb-basemaps-c.global.ssl.fastly.net/light_all/{z}/{x}/{y}{ratio}.png",
+    "https://cartodb-basemaps-d.global.ssl.fastly.net/light_all/{z}/{x}/{y}{ratio}.png",
   ],
   tileSize: 256,
   attribution:
@@ -41,10 +41,10 @@ const CARTO_POSITRON = {
 const CARTO_DARK_MATTER = {
   type: "raster",
   tiles: [
-    "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
-    "https://cartodb-basemaps-b.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
-    "https://cartodb-basemaps-c.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
-    "https://cartodb-basemaps-d.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+    "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{ratio}.png",
+    "https://cartodb-basemaps-b.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{ratio}.png",
+    "https://cartodb-basemaps-c.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{ratio}.png",
+    "https://cartodb-basemaps-d.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{ratio}.png",
   ],
   tileSize: 256,
   attribution:
