@@ -260,6 +260,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/trusted-types@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "@types/trusted-types@npm:2.0.2"
+  checksum: 3371eef5f1c50e1c3c07a127c1207b262ba65b83dd167a1c460fc1b135a3fb0c97b9f508efebd383f239cc5dd5b7169093686a692a501fde9c3f7208657d9b0d
+  languageName: node
+  linkType: hard
+
 "JSONStream@npm:0.8.0":
   version: 0.8.0
   resolution: "JSONStream@npm:0.8.0"
@@ -693,6 +700,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lit-html@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "lit-html@npm:2.3.0"
+  dependencies:
+    "@types/trusted-types": ^2.0.2
+  checksum: 71b86f28461c61e1bf595a605409e4ce79edd2f70257e365899cddf64902c4879d4a05619a8f5026847046e92e26739a1e10e9460b3967e5974387ec10991723
+  languageName: node
+  linkType: hard
+
 "maplibre-gl@npm:^2.2.1":
   version: 2.2.1
   resolution: "maplibre-gl@npm:2.2.1"
@@ -908,6 +924,7 @@ __metadata:
     bootstrap: ^5.2.0
     dotenv: ^16.0.1
     esbuild: latest
+    lit-html: ^2.3.0
     maplibre-gl: ^2.2.1
     osmtogeojson: ^3.0.0-beta.4
     prettier: ^2.7.1

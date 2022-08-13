@@ -1,5 +1,6 @@
 import maplibregl from "maplibre-gl";
 import * as bootstrap from "bootstrap";
+import { html, render } from "lit-html";
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -427,12 +428,21 @@ function build_data_layers(map) {
     }
     console.debug("Feature inspector", ...query);
     const features = new Map(query.map((feat) => [feat.id, feat]));
-    const infoText = [...features.values()]
-      .map((feat) => [feat.id, feat.properties.name].join(" "))
-      .join("\n");
-
+    const showFeature = ({ id, properties }) => {
+      const featureUrl = "https://www.openstreetmap.org/" + id;
+      return html`
+        <li>
+          <a target="_blank" href="${featureUrl}">${id} ${properties.name}</a>
+        </li>
+      `;
+    };
+    const infoHtml = html`
+      <ul>
+        ${[...features.values()].map((feat) => showFeature(feat))}
+      </ul>
+    `;
     const infoModalEle = document.getElementById("infoModal");
-    infoModalEle.querySelector(".modal-body p").textContent = infoText;
+    render(infoHtml, infoModalEle.querySelector(".modal-body p"));
     const infoModal = bootstrap.Modal.getOrCreateInstance(infoModalEle);
     infoModal.show();
   });

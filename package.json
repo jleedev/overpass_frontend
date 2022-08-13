@@ -11,11 +11,13 @@
     "bootstrap": "^5.2.0",
     "dotenv": "^16.0.1",
     "esbuild": "latest",
+    "lit-html": "^2.3.0",
     "maplibre-gl": "^2.2.1",
     "osmtogeojson": "^3.0.0-beta.4",
     "prettier": "^2.7.1"
   },
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "code_format": "prettier --write src/*"
   }
 }
