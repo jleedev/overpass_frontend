@@ -1,9 +1,5 @@
 import osmtogeojson from "osmtogeojson";
-
-import * as turfHelpers from "@turf/helpers";
-import * as turfMeta from "@turf/meta";
-import turfBbox from "@turf/bbox";
-import pointOnFeature from "@turf/point-on-feature";
+import * as turf from "@turf/turf";
 
 self.onmessage = async (event) => {
   const it = handleMessage(event)[Symbol.asyncIterator]();
@@ -44,19 +40,19 @@ async function* handleMessage({ data }) {
   yield "Finding centroids…";
   const centroids = replaceGeometryWithPoints(geojson);
 
-  const bbox = turfBbox(geojson);
+  const bbox = turf.bbox(geojson);
 
   return { geojson, centroids, bbox };
 }
 
 const replaceGeometryWithPoints = (geojson) => {
-  return turfHelpers.featureCollection(
-    turfMeta.featureReduce(
+  return turf.featureCollection(
+    turf.featureReduce(
       geojson,
       (previousValue, currentFeature) => {
         const { id, properties } = currentFeature;
-        const { geometry } = pointOnFeature(currentFeature);
-        const feature = turfHelpers.feature(geometry, properties, { id });
+        const { geometry } = turf.pointOnFeature(currentFeature);
+        const feature = turf.feature(geometry, properties, { id });
         previousValue.push(feature);
         return previousValue;
       },

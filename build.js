@@ -1,37 +1,29 @@
-import {} from "dotenv/config";
+import "dotenv/config";
+
 import fs from "fs/promises";
 import esbuild from "esbuild";
 
 await fs.mkdir("dist/", { recursive: true });
 
+const build = (args) => esbuild.build({
+  bundle: true,
+  format: "esm",
+  logLevel: "debug",
+  minify: true,
+  outdir: "dist/",
+  sourcemap: true,
+  ...args,
+});
+
 await Promise.all([
-  esbuild.build({
+  build({
     entryPoints: ["src/main.js"],
     define: {
-      MAPTILER_KEY: `"${process.env.MAPTILER_KEY}"`,
+      MAPTILER_KEY: JSON.stringify(process.env.MAPTILER_KEY),
     },
-    outdir: "dist/",
-    bundle: true,
-    minify: true,
-    sourcemap: true,
-    format: "esm",
-    logLevel: "info",
   }),
-  esbuild.build({
+  build({
     entryPoints: ["src/overpass_worker.js"],
-    outdir: "dist/",
-    bundle: true,
-    minify: true,
-    sourcemap: true,
-    logLevel: "info",
-  }),
-  esbuild.build({
-    entryPoints: [
-      "node_modules/maplibre-gl/dist/maplibre-gl.css",
-      "node_modules/bootstrap/dist/css/bootstrap.min.css",
-    ],
-    outdir: "dist/",
-    logLevel: "info",
   }),
   fs.copyFile("index.html", "dist/index.html"),
-]);
+]).catch(() => process.exit(1));

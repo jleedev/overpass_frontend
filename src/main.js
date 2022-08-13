@@ -2,6 +2,9 @@ import maplibregl from "maplibre-gl";
 import * as bootstrap from "bootstrap";
 export { bootstrap };
 
+import "maplibre-gl/dist/maplibre-gl.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+
 function showError(txt) {
   const errorModalEle = document.getElementById("errorModal");
   const errorModal = bootstrap.Modal.getOrCreateInstance(errorModalEle);
@@ -67,7 +70,7 @@ const MAPTILER_TONER = {
   url: `https://api.maptiler.com/maps/toner/tiles.json?key=${MAPTILER_KEY}`,
 };
 
-const darkModeMatcher = matchMedia("(prefers-color-scheme: dark)");
+// const darkModeMatcher = matchMedia("(prefers-color-scheme: dark)");
 
 const MAP_STYLE = {
   version: 8,
@@ -80,14 +83,16 @@ const MAP_STYLE = {
       id: "light-tiles",
       type: "raster",
       source: "raster-tiles-light",
-      layout: { visibility: darkModeMatcher.matches ? "none" : "visible" },
+      // layout: { visibility: darkModeMatcher.matches ? "none" : "visible" },
     },
+    /*
     {
       id: "dark-tiles",
       type: "raster",
       source: "raster-tiles-dark",
       layout: { visibility: darkModeMatcher.matches ? "visible" : "none" },
     },
+    */
   ],
   center: [-80, 40.44],
   zoom: 9,
@@ -175,7 +180,7 @@ function load_basemap(container) {
     container,
     antialias: true,
     style: MAP_STYLE,
-    maxBounds: [-180, -85.051129, 180, 85.051129],
+    // maxBounds: [-180, -85.051129, 180, 85.051129],
     renderWorldCopies: false,
   });
   map.addControl(new maplibregl.ScaleControl());
@@ -470,6 +475,7 @@ async function init() {
   const map = load_basemap(el);
   window.map = map;
   await new Promise((resolve) => map.once("load", resolve));
+  /*
   darkModeMatcher.addEventListener("change", () => {
     map.setLayoutProperty(
       "light-tiles",
@@ -482,6 +488,7 @@ async function init() {
       darkModeMatcher.matches ? "visible" : "none"
     );
   });
+  */
   build_data_layers(map);
   document.getElementById("btnRun").addEventListener("click", btnRunClick);
 }
