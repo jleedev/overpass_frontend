@@ -1,6 +1,5 @@
 import maplibregl from "maplibre-gl";
 import * as bootstrap from "bootstrap";
-export { bootstrap };
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import "bootstrap/dist/css/bootstrap.min.css";
