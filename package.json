@@ -2,9 +2,12 @@
   "private": true,
   "packageManager": "yarn@3.2.2",
   "type": "module",
-  "devDependencies": {
+  "dependencies": {
     "@popperjs/core": "^2.11.6",
-    "@turf/turf": "^6.5.0",
+    "@turf/bbox": "^6.5.0",
+    "@turf/helpers": "^6.5.0",
+    "@turf/meta": "^6.5.0",
+    "@turf/point-on-feature": "^6.5.0",
     "bootstrap": "^5.2.0",
     "dotenv": "^16.0.1",
     "esbuild": "latest",

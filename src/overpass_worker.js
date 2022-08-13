@@ -1,5 +1,5 @@
 import osmtogeojson from "osmtogeojson";
-import * as turf from "@turf/turf";
+import * as turf from "./turf";
 
 self.onmessage = async (event) => {
   const it = handleMessage(event)[Symbol.asyncIterator]();
