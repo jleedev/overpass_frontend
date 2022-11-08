@@ -118,6 +118,9 @@ class LayerSelectionControl extends maplibregl.Evented {
 
         <input checked type="radio" class="btn-check" name="geometry-mode" value="geometry" id="geometry-mode-full" autocomplete="off">
         <label class="btn btn-outline-secondary" for="geometry-mode-full" aria-label="Geometry" title="Geometry">🌐</label>
+
+        <input type="radio" class="btn-check" name="geometry-mode" value="heat" id="geometry-mode-heat" autocomplete="off">
+        <label class="btn btn-outline-secondary" for="geometry-mode-heat" aria-label="Heatmap" title="Heatmap">🔥</label>
       </div>
     `;
     this._container
@@ -172,6 +175,11 @@ function set_layer_visibility(map, selection) {
     "osm_data_centroid_clusters",
     "visibility",
     selection == "clusters" ? "visible" : "none"
+  );
+  map.setLayoutProperty(
+    "osm_data_heat",
+    "visibility",
+    selection == "heat" ? "visible" : "none"
   );
 }
 
@@ -373,6 +381,19 @@ function build_data_layers(map) {
       "circle-pitch-alignment": "map",
       "circle-stroke-width": 1,
       "circle-stroke-color": "#000",
+    },
+  });
+
+  map.addLayer({
+    type: "heatmap",
+    id: "osm_data_heat",
+    source: "osm_data",
+    layout: {
+      visibility: "none",
+    },
+    paint: {
+      "heatmap-opacity": 0.5,
+      "heatmap-radius": 5,
     },
   });
 
