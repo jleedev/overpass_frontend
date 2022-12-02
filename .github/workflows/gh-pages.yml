@@ -35,6 +35,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: latest
+      - run: corepack enable
       - run: yarn
       - run: yarn build
       - name: Upload artifact
