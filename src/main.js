@@ -308,6 +308,10 @@ function build_data_layers(map) {
       ],
       "line-width": 5,
     },
+    layout: {
+      "line-cap": "round",
+      "line-join": "round",
+    },
   });
 
   map.addLayer({
