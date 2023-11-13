@@ -229,30 +229,38 @@ async function executeScript(txt) {
   return data;
 }
 
-let hoveredId = null;
-
-const handleMouseMove = (e) => {
-  if (e.features.length > 0) {
-    if (hoveredId !== null) {
-      map.setFeatureState(
-        { source: "osm_data", id: hoveredId },
-        { hover: false },
-      );
-    }
-    hoveredId = e.features[0].id;
-    map.setFeatureState({ source: "osm_data", id: hoveredId }, { hover: true });
-  }
-};
-
-const handleMouseLeave = () => {
-  if (hoveredId !== null) {
-    map.setFeatureState(
-      { source: "osm_data", id: hoveredId },
-      { hover: false },
-    );
-  }
-  hoveredId = null;
-};
+const trackHover = (() => {
+  const currentHover = new Set();
+  return {
+    mousemove(e) {
+      const features = map.queryRenderedFeatures(e.point);
+      const enter = new Set();
+      const exit = new Set(currentHover);
+      for (const { id } of features) {
+        exit.delete(id);
+        if (currentHover.has(id)) {
+          continue;
+        } else {
+          enter.add(id);
+        }
+      }
+      for (const id of exit) {
+        currentHover.delete(id);
+        map.setFeatureState({ source: "osm_data", id }, { hover: false });
+      }
+      for (const id of enter) {
+        currentHover.add(id);
+        map.setFeatureState({ source: "osm_data", id }, { hover: true });
+      }
+    },
+    mouseleave() {
+      for (const id of currentHover) {
+        currentHover.delete(id);
+        map.setFeatureState({ source: "osm_data", id }, { hover: false });
+      }
+    },
+  };
+})();
 
 function build_data_layers(map) {
   map.addSource("osm_data", {
@@ -297,7 +305,7 @@ function build_data_layers(map) {
     filter: [
       "in",
       ["geometry-type"],
-      ["literal", ["LineString", "MultiLineString"]],
+      ["literal", ["LineString", "MultiLineString", "Polygon", "MultiPolygon"]],
     ],
     paint: {
       "line-color": [
@@ -306,7 +314,13 @@ function build_data_layers(map) {
         "#808",
         "#f0f",
       ],
-      "line-width": 5,
+      "line-width": [
+        "match",
+        ["geometry-type"],
+        ["LineString", "MultiLineString"],
+        5,
+        2,
+      ],
     },
     layout: {
       "line-cap": "round",
@@ -404,10 +418,10 @@ function build_data_layers(map) {
     map.on("mouseleave", layer, () => {
       map.getCanvas().style.cursor = "";
     });
-
-    map.on("mousemove", layer, handleMouseMove);
-    map.on("mouseleave", layer, handleMouseLeave);
   }
+
+  map.on("mousemove", trackHover.mousemove);
+  map.on("mouseleave", trackHover.mousemove);
 
   map.on("click", "osm_data_centroid_clusters", async (e) => {
     // Handle cluster expansion zoom
