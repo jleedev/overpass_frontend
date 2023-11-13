@@ -28,55 +28,43 @@ const OSM_TILES = {
   tileSize: 256,
 };
 
-const CARTO_POSITRON = {
-  type: "raster",
-  tiles: [
-    "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}{ratio}.png",
-    "https://cartodb-basemaps-b.global.ssl.fastly.net/light_all/{z}/{x}/{y}{ratio}.png",
-    "https://cartodb-basemaps-c.global.ssl.fastly.net/light_all/{z}/{x}/{y}{ratio}.png",
-    "https://cartodb-basemaps-d.global.ssl.fastly.net/light_all/{z}/{x}/{y}{ratio}.png",
-  ],
+const json = async (...args) => {
+  const response = await fetch(...args);
+  if (!response.ok) throw new Error(response.status);
+  return await response.json();
+};
+
+const retina = (tileJson) => ({
   tileSize: 256,
-  attribution:
-    '© <a href="http://www.openstreetmap.org/copyright"> OpenStreetMap </a> contributors, © <a href="https://carto.com/about-carto/"> CARTO </a>',
-};
+  ...tileJson,
+  tiles: tileJson.tiles.map((u) =>
+    u.replace("/{z}/{x}/{y}.png", "/{z}/{x}/{y}{ratio}.png"),
+  ),
+});
 
-const CARTO_DARK_MATTER = {
+const STADIA_ADILADE_SMOOTH = {
   type: "raster",
-  tiles: [
-    "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{ratio}.png",
-    "https://cartodb-basemaps-b.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{ratio}.png",
-    "https://cartodb-basemaps-c.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{ratio}.png",
-    "https://cartodb-basemaps-d.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{ratio}.png",
-  ],
-  tileSize: 256,
-  attribution:
-    "Map tiles by Carto, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
+  ...retina(
+    await json(
+      "https://tiles.stadiamaps.com/styles/alidade_smooth/rendered.json",
+    ),
+  ),
 };
 
-const STAMEN_TONER = {
+const STADIA_ADILADE_SMOOTH_DARK = {
   type: "raster",
-  tiles: [
-    "https://stamen-tiles-a.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
-    "https://stamen-tiles-b.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
-    "https://stamen-tiles-c.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
-    "https://stamen-tiles-d.a.ssl.fastly.net/toner/{z}/{x}/{y}.png",
-  ],
-  tileSize: 256,
+  ...retina(
+    await json(
+      "https://tiles.stadiamaps.com/styles/alidade_smooth_dark/rendered.json",
+    ),
+  ),
 };
-
-const MAPTILER_TONER = {
-  type: "raster",
-  url: `https://api.maptiler.com/maps/toner/tiles.json?key=${MAPTILER_KEY}`,
-};
-
-// const darkModeMatcher = matchMedia("(prefers-color-scheme: dark)");
 
 const MAP_STYLE = {
   version: 8,
   sources: {
-    "raster-tiles-light": CARTO_POSITRON,
-    "raster-tiles-dark": CARTO_DARK_MATTER,
+    "raster-tiles-light": STADIA_ADILADE_SMOOTH,
+    "raster-tiles-dark": STADIA_ADILADE_SMOOTH_DARK,
   },
   layers: [
     {
@@ -126,7 +114,7 @@ class LayerSelectionControl extends maplibregl.Evented {
     this._container
       .querySelectorAll("input")
       .forEach((x) =>
-        x.addEventListener("change", this._handleSelectionChange)
+        x.addEventListener("change", this._handleSelectionChange),
       );
     return this._container;
   }
@@ -143,7 +131,7 @@ class LayerSelectionControl extends maplibregl.Evented {
     this._container
       .querySelectorAll("input")
       .forEach((x) =>
-        x.removeEventListener("change", this._handleSelectionChange)
+        x.removeEventListener("change", this._handleSelectionChange),
       );
     this._container.parentNode.removeChild(this._container);
     this._map = undefined;
@@ -154,32 +142,32 @@ function set_layer_visibility(map, selection) {
   map.setLayoutProperty(
     "osm_data_fill",
     "visibility",
-    selection == "geometry" ? "visible" : "none"
+    selection == "geometry" ? "visible" : "none",
   );
   map.setLayoutProperty(
     "osm_data_line",
     "visibility",
-    selection == "geometry" ? "visible" : "none"
+    selection == "geometry" ? "visible" : "none",
   );
   map.setLayoutProperty(
     "osm_data_point",
     "visibility",
-    selection == "geometry" ? "visible" : "none"
+    selection == "geometry" ? "visible" : "none",
   );
   map.setLayoutProperty(
     "osm_data_centroids",
     "visibility",
-    selection == "points" ? "visible" : "none"
+    selection == "points" ? "visible" : "none",
   );
   map.setLayoutProperty(
     "osm_data_centroid_clusters",
     "visibility",
-    selection == "clusters" ? "visible" : "none"
+    selection == "clusters" ? "visible" : "none",
   );
   map.setLayoutProperty(
     "osm_data_heat",
     "visibility",
-    selection == "heat" ? "visible" : "none"
+    selection == "heat" ? "visible" : "none",
   );
 }
 
@@ -194,19 +182,20 @@ function load_basemap(container) {
   map.addControl(new maplibregl.ScaleControl());
   const layer_selection_control = new LayerSelectionControl();
   layer_selection_control.on("change", ({ newValue }) =>
-    set_layer_visibility(map, newValue)
+    set_layer_visibility(map, newValue),
   );
   map.addControl(layer_selection_control, "top-right");
-  // disable map rotation using right click + drag
+
   map.dragRotate.disable();
-  // disable map rotation using touch rotation gesture
   map.touchZoomRotate.disableRotation();
+  map.touchPitch.disable();
+  map.keyboard.disableRotation();
   return map;
 }
 
 const overpass_worker = new Worker(
   new URL("overpass_worker.js", import.meta.url),
-  { name: "overpass_worker" }
+  { name: "overpass_worker", type: "module" },
 );
 
 async function executeScript(txt) {
@@ -247,7 +236,7 @@ const handleMouseMove = (e) => {
     if (hoveredId !== null) {
       map.setFeatureState(
         { source: "osm_data", id: hoveredId },
-        { hover: false }
+        { hover: false },
       );
     }
     hoveredId = e.features[0].id;
@@ -259,7 +248,7 @@ const handleMouseLeave = () => {
   if (hoveredId !== null) {
     map.setFeatureState(
       { source: "osm_data", id: hoveredId },
-      { hover: false }
+      { hover: false },
     );
   }
   hoveredId = null;
@@ -430,7 +419,7 @@ function build_data_layers(map) {
       map
         .getSource("osm_data_centroid_clusters")
         .getClusterExpansionZoom(clusterId, (err, zoom) =>
-          err ? reject(err) : resolve(zoom)
+          err ? reject(err) : resolve(zoom),
         );
     });
     map.easeTo({
@@ -473,7 +462,7 @@ let resultBbox = undefined;
 
 async function btnRunClick() {
   const progressModal = bootstrap.Modal.getOrCreateInstance(
-    document.getElementById("progressModal")
+    document.getElementById("progressModal"),
   );
   try {
     progressModal.show();
@@ -489,7 +478,7 @@ async function btnRunClick() {
         [resultBbox[0], resultBbox[1]],
         [resultBbox[2], resultBbox[3]],
       ],
-      { linear: false }
+      { linear: false },
     );
 
     map.getSource("osm_data").setData(geojson);
@@ -504,7 +493,7 @@ async function init() {
   const el = document.getElementById("map");
   const map = load_basemap(el);
   window.map = map;
-  await new Promise((resolve) => map.once("load", resolve));
+  await map.once("load");
   /*
   darkModeMatcher.addEventListener("change", () => {
     map.setLayoutProperty(
@@ -523,4 +512,4 @@ async function init() {
   document.getElementById("btnRun").addEventListener("click", btnRunClick);
 }
 
-document.addEventListener("DOMContentLoaded", init);
+await init();

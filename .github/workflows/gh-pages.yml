@@ -28,18 +28,18 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Pages
-        uses: actions/configure-pages@v2
+        uses: actions/configure-pages@v3
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: latest
       - run: corepack enable
       - run: yarn
       - run: yarn build
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v2
         with:
           path: ./dist
 
@@ -54,4 +54,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v2

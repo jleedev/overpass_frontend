@@ -56,7 +56,7 @@ const replaceGeometryWithPoints = (geojson) => {
         previousValue.push(feature);
         return previousValue;
       },
-      []
-    )
+      [],
+    ),
   );
 };
