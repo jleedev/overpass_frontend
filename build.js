@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import fs from "fs/promises";
+import fs from "node:fs/promises";
 import esbuild from "esbuild";
 
 await fs.mkdir("dist/", { recursive: true });
