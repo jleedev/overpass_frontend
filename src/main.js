@@ -267,6 +267,7 @@ function build_data_layers(map) {
     type: "geojson",
     data: { type: "FeatureCollection", features: [] },
     promoteId: "id",
+    tolerance: 0,
   });
 
   map.addSource("osm_data_centroids", {
